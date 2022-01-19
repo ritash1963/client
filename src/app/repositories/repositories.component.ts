@@ -3,6 +3,11 @@ import { NgxGalleryAnimation, NgxGalleryImage, NgxGalleryOptions } from '@kolkov
 import { RepositoryVM } from '../_models/repositoryVM';
 import { RepositoriesService } from '../_services/repositories.service';
 import { NgxGalleryModule } from '@kolkov/ngx-gallery';
+import { User } from '../_models/user';
+import { AuthService } from '../_services/auth.service';
+import { take } from 'rxjs/operators';
+import { MarkItemVM } from '../_models/markItemVM';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-repositories',
@@ -15,7 +20,8 @@ export class RepositoriesComponent implements OnInit {
   galleryOptions: NgxGalleryOptions[];
   galleryImages: NgxGalleryImage[];
   
-  constructor(private repositoriesService: RepositoriesService) { }
+  constructor(private repositoriesService: RepositoriesService, private authService: AuthService,
+              private toastr: ToastrService) { }
 
   ngOnInit(): void {
       this.galleryOptions = [
@@ -57,4 +63,20 @@ export class RepositoriesComponent implements OnInit {
     })
   }
  }
-}
+
+  markItem(item: string) {
+    let currentUser: User;
+    this.authService.currentUser$.pipe(take(1)).subscribe(user => currentUser = user);
+    let markItem: MarkItemVM = {userName:currentUser.username, itemName:item};
+    console.log(markItem);
+    console.log(item +  currentUser.username);
+    this.repositoriesService.addBookmark(markItem).subscribe(() => {
+      this.toastr.error('Item is marked.');
+       }, error => {
+       this.toastr.error('Problem to mark this item.');
+       console.log(error);
+       });
+   }
+      
+  }
+
